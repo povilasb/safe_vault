@@ -15,8 +15,8 @@ use routing::Config as RoutingConfig;
 use routing::DevConfig as RoutingDevConfig;
 use routing::{
     AccountInfo, AccountPacket, Authority, BootstrapConfig, Client, ClientError, EntryAction,
-    Event, EventStream, FullId, ImmutableData, MessageId, MutableData, PermissionSet, PublicId,
-    Response, User, Value, XorName, ACC_LOGIN_ENTRY_KEY, TYPE_TAG_SESSION_PACKET,
+    Event, EventStream, ImmutableData, MessageId, MutableData, PermissionSet,
+    Response, User, Value, XorName, SecretKeys, ACC_LOGIN_ENTRY_KEY, TYPE_TAG_SESSION_PACKET,
 };
 use safe_crypto::PublicSignKey;
 use std::collections::{BTreeMap, BTreeSet};
@@ -55,9 +55,9 @@ macro_rules! assert_recv_response {
 
 /// Client for use in tests only
 pub struct TestClient {
-    _handle: ServiceHandle<PublicId>,
+    _handle: ServiceHandle,
     routing_client: Client,
-    full_id: FullId,
+    full_id: SecretKeys,
     client_manager: Authority<XorName>,
     rng: SeededRng,
 }
@@ -73,15 +73,15 @@ pub struct TestClient {
 
 impl TestClient {
     /// Create a test client for the mock network
-    pub fn new(network: &Network<PublicId>, bootstrap_config: Option<BootstrapConfig>) -> Self {
-        Self::with_id(network, bootstrap_config, FullId::new())
+    pub fn new(network: &Network, bootstrap_config: Option<BootstrapConfig>) -> Self {
+        Self::with_id(network, bootstrap_config, SecretKeys::new())
     }
 
-    /// Create a test client with the given `FullId`.
+    /// Create a test client with the given `SecretKeys`.
     pub fn with_id(
-        network: &Network<PublicId>,
+        network: &Network,
         bootstrap_config: Option<BootstrapConfig>,
-        full_id: FullId,
+        full_id: SecretKeys,
     ) -> Self {
         let handle = network.new_service_handle(bootstrap_config.clone(), None);
         let routing_config = RoutingConfig {
@@ -99,7 +99,7 @@ impl TestClient {
             ))
         });
 
-        let client_manager = Authority::ClientManager(*full_id.public_id().name());
+        let client_manager = Authority::ClientManager(*full_id.public_keys().name());
 
         TestClient {
             _handle: handle,
@@ -640,18 +640,18 @@ impl TestClient {
     }
 
     /// Returns a full id for this client
-    pub fn full_id(&self) -> &FullId {
+    pub fn full_id(&self) -> &SecretKeys {
         &self.full_id
     }
 
     /// Returns signing public key for this client
     pub fn signing_public_key(&self) -> &PublicSignKey {
-        self.full_id.public_id().signing_public_key()
+        self.full_id.public_keys().public_sign_key()
     }
 
     /// Returns client's network name
     pub fn name(&self) -> &XorName {
-        self.full_id.public_id().name()
+        self.full_id.public_keys().name()
     }
 
     fn flush(&mut self) {

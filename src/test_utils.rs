@@ -143,16 +143,16 @@ pub fn gen_mutable_data_entry_actions<R: Rng>(
 #[cfg(not(feature = "use-mock-crust"))]
 pub fn gen_client_authority() -> (ClientAuthority, PublicSignKey) {
     use rand;
-    use routing::FullId;
+    use routing::SecretKeys;
 
-    let full_id = FullId::new();
+    let full_id = SecretKeys::new();
 
     let client = ClientAuthority {
-        client_id: *full_id.public_id(),
+        client_id: *full_id.public_keys(),
         proxy_node_name: rand::random(),
     };
 
-    (client, *full_id.public_id().signing_public_key())
+    (client, *full_id.public_keys().signing_public_key())
 }
 
 /// Generate `ClientManager` authority for the client with the given client key.

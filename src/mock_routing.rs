@@ -8,8 +8,8 @@
 
 use routing::Config as RoutingConfig;
 use routing::{
-    AccountInfo, Authority, Cache, ClientError, EntryAction, Event, EventStream, FullId,
-    ImmutableData, InterfaceError, MessageId, MutableData, PermissionSet, PublicId, Request,
+    AccountInfo, Authority, Cache, ClientError, EntryAction, Event, EventStream, SecretKeys,
+    ImmutableData, InterfaceError, MessageId, MutableData, PermissionSet, Request,
     Response, RoutingError, RoutingTable, User, Value, XorName,
 };
 use safe_crypto::PublicSignKey;
@@ -309,7 +309,7 @@ impl NodeBuilder {
     }
 
     pub fn create(self) -> Result<Node, RoutingError> {
-        let id = *FullId::new().public_id();
+        let id = *SecretKeys::new().public_keys();
         let group_size = self
             .config
             .and_then(|config| config.dev)

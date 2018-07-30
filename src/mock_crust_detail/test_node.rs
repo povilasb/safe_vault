@@ -16,7 +16,7 @@ use rand::{self, Rng};
 use routing::mock_crust::{self, Endpoint, Network, ServiceHandle};
 use routing::Config as RoutingConfig;
 use routing::DevConfig as RoutingDevConfig;
-use routing::{BootstrapConfig, PublicId, RoutingTable, XorName, Xorable};
+use routing::{BootstrapConfig, RoutingTable, XorName, Xorable};
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -25,7 +25,7 @@ use vault::Vault;
 /// Test node for mock network
 pub struct TestNode {
     /// A handle of this node's mock Crust service
-    pub handle: ServiceHandle<PublicId>,
+    pub handle: ServiceHandle,
     vault: Vault,
     chunk_store_root: PathBuf,
 }
@@ -33,7 +33,7 @@ pub struct TestNode {
 impl TestNode {
     /// create a test node for mock network
     pub fn new(
-        network: &Network<PublicId>,
+        network: &Network,
         bootstrap_config: Option<BootstrapConfig>,
         config: Option<Config>,
         first_node: bool,
@@ -138,7 +138,7 @@ impl Drop for TestNode {
 
 /// Create nodes for mock network
 pub fn create_nodes(
-    network: &Network<PublicId>,
+    network: &Network,
     size: usize,
     config: Option<Config>,
     use_cache: bool,
@@ -176,7 +176,7 @@ pub fn create_nodes(
 
 /// Add node to the mock network
 pub fn add_node(
-    network: &Network<PublicId>,
+    network: &Network,
     nodes: &mut Vec<TestNode>,
     index: usize,
     use_cache: bool,
@@ -187,7 +187,7 @@ pub fn add_node(
 
 /// Add node to the mock network with specified config
 pub fn add_node_with_config(
-    network: &Network<PublicId>,
+    network: &Network,
     nodes: &mut Vec<TestNode>,
     config: Config,
     index: usize,
