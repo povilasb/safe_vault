@@ -41,7 +41,7 @@ unwrap = "1.1.0"
 
 [dependencies.routing]
 git = "https://github.com/povilasb/routing"
-rev = "2ce0e580d"
+rev = "testing"
 
 [dependencies.safe_crypto]
 git = "https://github.com/maidsafe/safe_crypto"
