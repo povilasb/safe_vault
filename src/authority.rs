@@ -12,24 +12,24 @@ use safe_crypto::{PublicKeys, PublicSignKey};
 /// Client.
 #[derive(Debug, Clone)]
 pub struct ClientAuthority {
-    pub client_id: PublicKeys,
+    pub client_pub_id: PublicKeys,
     pub proxy_node_name: XorName,
 }
 
 impl ClientAuthority {
     pub fn name(&self) -> XorName {
-        self.client_id.xor_name()
+        self.client_pub_id.xor_name()
     }
 
     pub fn client_key(&self) -> PublicSignKey {
-        self.client_id.public_sign_key()
+        self.client_pub_id.public_sign_key()
     }
 }
 
 impl From<ClientAuthority> for Authority<XorName> {
     fn from(auth: ClientAuthority) -> Self {
         Authority::Client {
-            client_id: auth.client_id,
+            client_pub_id: auth.client_pub_id,
             proxy_node_name: auth.proxy_node_name,
         }
     }

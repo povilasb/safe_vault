@@ -148,7 +148,7 @@ pub fn gen_client_authority() -> (ClientAuthority, PublicSignKey) {
     let full_id = SecretKeys::new();
 
     let client = ClientAuthority {
-        client_id: *full_id.public_keys(),
+        client_pub_id: *full_id.public_keys(),
         proxy_node_name: rand::random(),
     };
 
