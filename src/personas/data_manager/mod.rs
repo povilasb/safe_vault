@@ -23,7 +23,7 @@ use routing::{
     RoutingTable, User, Value, XorName, QUORUM_DENOMINATOR, QUORUM_NUMERATOR,
     TYPE_TAG_SESSION_PACKET,
 };
-use rust_sodium::crypto::sign;
+use safe_crypto::PublicSignKey;
 use std::collections::{BTreeMap, BTreeSet};
 use std::convert::From;
 use std::fmt::{self, Debug, Formatter};
@@ -423,7 +423,7 @@ impl DataManager {
         dst: Authority<XorName>,
         data: MutableData,
         msg_id: MessageId,
-        _requester: sign::PublicKey,
+        _requester: PublicSignKey,
     ) -> Result<(), InternalError> {
         let data_id = data.id();
 
@@ -719,7 +719,7 @@ impl DataManager {
         tag: u64,
         actions: BTreeMap<Vec<u8>, EntryAction>,
         msg_id: MessageId,
-        requester: sign::PublicKey,
+        requester: PublicSignKey,
     ) -> Result<(), InternalError> {
         let mutation = Mutation::MutateMDataEntries {
             name,
@@ -782,7 +782,7 @@ impl DataManager {
         permissions: PermissionSet,
         version: u64,
         msg_id: MessageId,
-        requester: sign::PublicKey,
+        requester: PublicSignKey,
     ) -> Result<(), InternalError> {
         let mutation = Mutation::SetMDataUserPermissions {
             name,
@@ -810,7 +810,7 @@ impl DataManager {
         user: User,
         version: u64,
         msg_id: MessageId,
-        requester: sign::PublicKey,
+        requester: PublicSignKey,
     ) -> Result<(), InternalError> {
         let mutation = Mutation::DelMDataUserPermissions {
             name,
@@ -834,7 +834,7 @@ impl DataManager {
         dst: Authority<XorName>,
         name: XorName,
         tag: u64,
-        new_owners: BTreeSet<sign::PublicKey>,
+        new_owners: BTreeSet<PublicSignKey>,
         version: u64,
         msg_id: MessageId,
     ) -> Result<(), InternalError> {
@@ -1595,7 +1595,7 @@ where
 }
 
 // `owners` must have exactly 1 element.
-fn extract_owner(owners: BTreeSet<sign::PublicKey>) -> Result<sign::PublicKey, ClientError> {
+fn extract_owner(owners: BTreeSet<PublicSignKey>) -> Result<PublicSignKey, ClientError> {
     let len = owners.len();
     match owners.into_iter().next() {
         Some(owner) if len == 1 => Ok(owner),

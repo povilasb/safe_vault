@@ -16,7 +16,7 @@ use routing::{
     Action, Authority, BootstrapConfig, ClientError, EntryAction, EntryActions, EntryError, Event,
     ImmutableData, MessageId, MutableData, PermissionSet, Response, User, MAX_MUTABLE_DATA_ENTRIES,
 };
-use rust_sodium::crypto::sign;
+use safe_crypto::{gen_sign_keypair, PublicSignKey};
 use safe_vault::mock_crust_detail::test_client::TestClient;
 use safe_vault::mock_crust_detail::test_node::{self, TestNode};
 use safe_vault::mock_crust_detail::{self, poll, Data};
@@ -201,7 +201,7 @@ fn mutable_data_normal_flow() {
     assert!(received_permissions.is_empty());
 
     // Set some permissions and get them back to verify they are the same.
-    let (app_key, _) = sign::gen_keypair();
+    let (app_key, _) = gen_sign_keypair();
     let app_user = User::Key(app_key);
 
     let any_permission_set = PermissionSet::new().allow(Action::Insert);
@@ -408,7 +408,7 @@ fn mutable_data_error_flow() {
         Err(ClientError::NoSuchData)
     );
 
-    let (app_key, _) = sign::gen_keypair();
+    let (app_key, _) = gen_sign_keypair();
     assert_match!(
         client.list_mdata_user_permissions_response(
             non_existing_name,
@@ -1423,7 +1423,7 @@ fn gen_immutable_data_not_close_to<R: Rng>(
 }
 
 // Create set of owner keys.
-fn owner_keys(key: sign::PublicKey) -> BTreeSet<sign::PublicKey> {
+fn owner_keys(key: PublicSignKey) -> BTreeSet<PublicSignKey> {
     let mut result = BTreeSet::new();
     let _ = result.insert(key);
     result

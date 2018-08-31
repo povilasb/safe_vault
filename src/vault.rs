@@ -21,8 +21,6 @@ use mock_routing::NodeBuilder;
 use personas::data_manager::DataId;
 use personas::data_manager::{self, DataManager};
 use personas::maid_manager::{self, MaidManager};
-#[cfg(feature = "use-mock-crypto")]
-use routing::mock_crypto::rust_sodium;
 #[cfg(feature = "use-mock-crust")]
 use routing::Config as RoutingConfig;
 pub use routing::Event;
@@ -31,9 +29,7 @@ pub use routing::Node as RoutingNode;
 #[cfg(not(all(test, feature = "use-mock-routing")))]
 use routing::NodeBuilder;
 use routing::{Authority, EventStream, Request, Response, RoutingTable, XorName};
-#[cfg(not(feature = "use-mock-crypto"))]
-use rust_sodium;
-use rust_sodium::crypto::sign;
+use safe_crypto::{self, PublicSignKey};
 
 /// Main struct to hold all personas and Routing instance
 pub struct Vault {
@@ -58,7 +54,8 @@ impl Vault {
         use_cache: bool,
         config: Config,
     ) -> Result<Self, InternalError> {
-        let _ = rust_sodium::init();
+        // TODO(povilas): return error
+        let _ = safe_crypto::init();
         let disable_mutation_limit = config
             .dev
             .as_ref()
@@ -73,7 +70,7 @@ impl Vault {
         Ok(Vault {
             maid_manager: MaidManager::new(
                 group_size,
-                config.invite_key.map(sign::PublicKey),
+                config.invite_key.map(PublicSignKey::from_bytes),
                 disable_mutation_limit,
             ),
             data_manager: DataManager::new(

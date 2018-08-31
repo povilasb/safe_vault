@@ -874,7 +874,7 @@ fn create_account(
     src: ClientAuthority,
     dst: ClientManagerAuthority,
 ) -> MessageId {
-    let client_key = *src.client_key();
+    let client_key = src.client_key();
     let account_packet = test_utils::gen_mutable_data(
         TYPE_TAG_SESSION_PACKET,
         0,

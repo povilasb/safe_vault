@@ -12,6 +12,7 @@ use maidsafe_utilities::SeededRng;
 use mock_routing::RequestWrapper;
 use rand::{self, Rng};
 use routing::{Action, EntryActions, Request, Response, User, MAX_MUTABLE_DATA_ENTRIES};
+use safe_crypto::gen_sign_keypair;
 use test_utils;
 use vault::Refresh as VaultRefresh;
 
@@ -552,7 +553,7 @@ fn mdata_with_churn_with_entries_accumulating_before_shell() {
     // The next node responds with a data with the same entries but different shell.
     // The entries accumulate at this point, but not the shell.
     let mut data_with_bad_shell = data.clone();
-    let (other_key, _) = sign::gen_keypair();
+    let (other_key, _) = gen_sign_keypair();
     assert!(data_with_bad_shell.change_owner_without_validation(other_key, 1));
 
     let node_name = unwrap!(other_node_names.get(QUORUM - 1));

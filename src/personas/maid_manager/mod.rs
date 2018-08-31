@@ -23,7 +23,7 @@ use routing::{
     MessageId, MutableData, PermissionSet, RoutingTable, User, XorName, ACC_LOGIN_ENTRY_KEY,
     TYPE_TAG_SESSION_PACKET,
 };
-use rust_sodium::crypto::sign;
+use safe_crypto::PublicSignKey;
 use std::collections::hash_map::{Entry, VacantEntry};
 use std::collections::{BTreeMap, BTreeSet};
 use std::time::Duration;
@@ -49,7 +49,7 @@ pub struct MaidManager {
     accounts: HashMap<XorName, Account>,
     data_ops_msg_id_accumulator: MessageIdAccumulator<(XorName, MessageId)>,
     request_cache: HashMap<MessageId, CachedRequest>,
-    invite_key: Option<sign::PublicKey>,
+    invite_key: Option<PublicSignKey>,
     /// The ongoing requests from clients to create a new account.
     account_creation_cache: LruCache<MessageId, CachedAccountCreation>,
     /// Dev option to allow clients to make unlimited mutation requests.
@@ -59,7 +59,7 @@ pub struct MaidManager {
 impl MaidManager {
     pub fn new(
         group_size: usize,
-        invite_key: Option<sign::PublicKey>,
+        invite_key: Option<PublicSignKey>,
         disable_mutation_limit: bool,
     ) -> MaidManager {
         MaidManager {
@@ -194,7 +194,7 @@ impl MaidManager {
         dst: ClientManagerAuthority,
         data: MutableData,
         msg_id: MessageId,
-        requester: sign::PublicKey,
+        requester: PublicSignKey,
     ) -> Result<(), InternalError> {
         match self.prepare_put_mdata(src, dst, data, msg_id, requester) {
             Ok(PutMDataAction::Claim(invite_name)) => {
@@ -273,7 +273,7 @@ impl MaidManager {
         tag: u64,
         actions: BTreeMap<Vec<u8>, EntryAction>,
         msg_id: MessageId,
-        requester: sign::PublicKey,
+        requester: PublicSignKey,
     ) -> Result<(), InternalError> {
         if let Err(err) =
             self.prepare_data_mutation(&src, &dst, AuthPolicy::Key, Some(msg_id), Some(requester))
@@ -327,7 +327,7 @@ impl MaidManager {
                                            dst,
                                            data,
                                            msg_id,
-                                           *src.client_key())?;
+                                           src.client_key())?;
                 }
                 Err(error) => {
                     let converted_error = match error {
@@ -378,7 +378,7 @@ impl MaidManager {
         permissions: PermissionSet,
         version: u64,
         msg_id: MessageId,
-        requester: sign::PublicKey,
+        requester: PublicSignKey,
     ) -> Result<(), InternalError> {
         if let Err(err) =
             self.prepare_data_mutation(&src, &dst, AuthPolicy::Key, Some(msg_id), Some(requester))
@@ -452,7 +452,7 @@ impl MaidManager {
         user: User,
         version: u64,
         msg_id: MessageId,
-        requester: sign::PublicKey,
+        requester: PublicSignKey,
     ) -> Result<(), InternalError> {
         if let Err(err) =
             self.prepare_data_mutation(&src, &dst, AuthPolicy::Key, Some(msg_id), Some(requester))
@@ -515,7 +515,7 @@ impl MaidManager {
         dst: ClientManagerAuthority,
         name: XorName,
         tag: u64,
-        new_owners: BTreeSet<sign::PublicKey>,
+        new_owners: BTreeSet<PublicSignKey>,
         version: u64,
         msg_id: MessageId,
     ) -> Result<(), InternalError> {
@@ -588,7 +588,7 @@ impl MaidManager {
         routing_node: &mut RoutingNode,
         src: ClientAuthority,
         dst: ClientManagerAuthority,
-        key: sign::PublicKey,
+        key: PublicSignKey,
         version: u64,
         msg_id: MessageId,
     ) -> Result<(), InternalError> {
@@ -600,7 +600,7 @@ impl MaidManager {
         routing_node: &mut RoutingNode,
         src: ClientAuthority,
         dst: ClientManagerAuthority,
-        key: sign::PublicKey,
+        key: PublicSignKey,
         version: u64,
         msg_id: MessageId,
     ) -> Result<(), InternalError> {
@@ -715,7 +715,7 @@ impl MaidManager {
         dst: ClientManagerAuthority,
         data: MutableData,
         msg_id: MessageId,
-        requester: sign::PublicKey,
+        requester: PublicSignKey,
     ) -> Result<PutMDataAction, ClientError> {
         data.validate()?;
 
@@ -825,7 +825,7 @@ impl MaidManager {
         dst: ClientManagerAuthority,
         data: MutableData,
         msg_id: MessageId,
-        requester: sign::PublicKey,
+        requester: PublicSignKey,
     ) -> Result<(), InternalError> {
         if let Some(insert) = self.insert_into_request_cache(msg_id, src, dst, Some(data.tag())) {
             let fwd_src = dst.into();
@@ -875,7 +875,7 @@ impl MaidManager {
         src: ClientAuthority,
         dst: ClientManagerAuthority,
         op: KeysOp,
-        key: sign::PublicKey,
+        key: PublicSignKey,
         version: u64,
         msg_id: MessageId,
     ) -> Result<(), InternalError> {
@@ -914,9 +914,9 @@ impl MaidManager {
         src: &ClientAuthority,
         dst: &ClientManagerAuthority,
         op: KeysOp,
-        key: sign::PublicKey,
+        key: PublicSignKey,
         version: u64,
-    ) -> Result<BTreeSet<sign::PublicKey>, ClientError> {
+    ) -> Result<BTreeSet<PublicSignKey>, ClientError> {
         let client_name = src.name();
         let client_manager_name = dst.name();
 
@@ -949,14 +949,14 @@ impl MaidManager {
         dst: &ClientManagerAuthority,
         policy: AuthPolicy,
         msg_id: Option<MessageId>,
-        requester: Option<sign::PublicKey>,
+        requester: Option<PublicSignKey>,
     ) -> Result<(), ClientError> {
         let account = self
             .accounts
             .get(dst.name())
             .ok_or(ClientError::NoSuchAccount)?;
         let allowed = src.name() == dst.name() || if AuthPolicy::Key == policy {
-            account.keys.contains(src.client_key())
+            account.keys.contains(&src.client_key())
         } else {
             false
         };
@@ -966,7 +966,7 @@ impl MaidManager {
         }
 
         if let Some(requester) = requester {
-            if requester != *src.client_key() {
+            if requester != src.client_key() {
                 return Err(ClientError::AccessDenied);
             }
         }
@@ -1091,7 +1091,7 @@ impl MaidManager {
         routing_node: &RoutingNode,
         account_name: XorName,
         ops_count: u64,
-        keys: BTreeSet<sign::PublicKey>,
+        keys: BTreeSet<PublicSignKey>,
     ) {
         if let Some(account) = self.fetch_account(routing_node, account_name) {
             if account.keys_ops_count < ops_count {
@@ -1149,7 +1149,7 @@ impl MaidManager {
     }
 
     fn is_admin(&self, authority: &ClientAuthority) -> bool {
-        Some(*authority.client_key()) == self.invite_key
+        Some(authority.client_key()) == self.invite_key
     }
 }
 
@@ -1171,7 +1171,7 @@ pub enum Refresh {
     UpdateKeys {
         name: XorName,
         ops_count: u64,
-        keys: BTreeSet<sign::PublicKey>,
+        keys: BTreeSet<PublicSignKey>,
     },
     InsertDataOp(XorName),
     Delete(XorName),
@@ -1203,8 +1203,8 @@ enum KeysOp {
 impl KeysOp {
     fn apply(
         self,
-        keys: &mut BTreeSet<sign::PublicKey>,
-        key: sign::PublicKey,
+        keys: &mut BTreeSet<PublicSignKey>,
+        key: PublicSignKey,
     ) -> Result<(), ClientError> {
         match self {
             KeysOp::Ins => {

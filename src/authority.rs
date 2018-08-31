@@ -7,7 +7,7 @@
 // permissions and limitations relating to use of the SAFE Network Software.
 
 use routing::{Authority, PublicId, XorName};
-use rust_sodium::crypto::sign;
+use safe_crypto::PublicSignKey;
 
 /// Client.
 #[derive(Debug, Clone, Copy)]
@@ -21,8 +21,8 @@ impl ClientAuthority {
         self.client_id.name()
     }
 
-    pub fn client_key(&self) -> &sign::PublicKey {
-        self.client_id.signing_public_key()
+    pub fn client_key(&self) -> PublicSignKey {
+        *self.client_id.signing_public_key()
     }
 }
 

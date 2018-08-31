@@ -18,7 +18,7 @@ use routing::{
     PermissionSet, Response, User, Value, XorName, MAX_IMMUTABLE_DATA_SIZE_IN_BYTES,
     MAX_MUTABLE_DATA_ENTRIES, MAX_MUTABLE_DATA_SIZE_IN_BYTES, TYPE_TAG_SESSION_PACKET,
 };
-use rust_sodium::crypto::sign;
+use safe_crypto::gen_sign_keypair;
 use safe_vault::mock_crust_detail::test_client::TestClient;
 use safe_vault::mock_crust_detail::{self, poll, test_node, Data};
 use safe_vault::{test_utils, Config, DEFAULT_MAX_OPS_COUNT, TYPE_TAG_INVITE};
@@ -310,7 +310,7 @@ fn invite() {
     let network = Network::new(group_size, seed);
     let admin_id = FullId::new();
     let vault_config = Config {
-        invite_key: Some(admin_id.public_id().signing_public_key().0),
+        invite_key: Some(admin_id.public_id().signing_public_key().into_bytes()),
         ..Default::default()
     };
 
@@ -591,7 +591,7 @@ fn account_concurrent_keys_mutation() {
         for _ in 0..mutations {
             if stored_keys.is_empty() || rng.gen() {
                 // Insert key
-                let (key, _) = sign::gen_keypair();
+                let (key, _) = gen_sign_keypair();
                 let msg_id = client.ins_auth_key(key, version + 1);
                 let _ = inserted_keys.insert(msg_id, key);
             } else {
@@ -689,7 +689,7 @@ fn account_concurrent_insert_key_put_data() {
         let data = test_utils::gen_immutable_data(1024, &mut rng);
         let msg_id_d = client.put_idata(data);
 
-        let (app_key, _) = sign::gen_keypair();
+        let (app_key, _) = gen_sign_keypair();
         let msg_id_k = client.ins_auth_key(app_key, version + 1);
 
         event_count += poll::nodes_and_client(&mut nodes, &mut client);
@@ -848,7 +848,7 @@ fn claiming_invitation_concurrently() {
     let network = Network::new(group_size, seed);
     let admin_id = FullId::new();
     let vault_config = Config {
-        invite_key: Some(admin_id.public_id().signing_public_key().0),
+        invite_key: Some(admin_id.public_id().signing_public_key().into_bytes()),
         ..Default::default()
     };
 
