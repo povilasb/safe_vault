@@ -18,12 +18,12 @@ if [ "${TRAVIS_RUST_VERSION}" = "$RUST_STABLE" ]; then
   env RUSTFLAGS="-C opt-level=2 -C codegen-units=8" cargo test ${ARG_TARGET} --release --verbose --features use-mock-routing &&
 
   # integration tests with mock crust
-  env RUSTFLAGS="-C opt-level=2 -C codegen-units=8" cargo test ${ARG_TARGET} --release --verbose --features use-mock-crust;
+  env RUSTFLAGS="-C opt-level=2 -C codegen-units=8" cargo test ${ARG_TARGET} --release --verbose --features="use-mock-crust use-mock-crypto";
 elif [ "${TRAVIS_OS_NAME}" = linux ]; then
   cargo fmt -- --check &&
   cargo clippy &&
-  cargo clippy --features use-mock-crust &&
+  cargo clippy --features="use-mock-crust use-mock-crypto" &&
   cargo clippy --profile test &&
   cargo clippy --profile test --features use-mock-routing &&
-  cargo clippy --profile test --features use-mock-crust;
+  cargo clippy --profile test --features="use-mock-crust use-mock-crypto";
 fi
